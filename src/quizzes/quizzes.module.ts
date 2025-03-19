@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { QuizService } from './quiz.service';
-import { QuizController } from './quiz.controller';
+import { QuizService } from './quizzes.service';
+import { QuizController } from './quizzes.controller';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({

@@ -3,8 +3,8 @@ import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PrismaPromise } from '@prisma/client';
-import { CreateQuestionDto } from 'src/question/dto/create-question.dto';
-import { UpdateQuestionDto } from 'src/question/dto/update-question.dto';
+import { CreateQuizQuestionDto } from 'src/questions/dto/create-quiz-question.dto';
+import { UpdateQuizQuestionDto } from 'src/questions/dto/update-quiz-question.dto';
 
 @Injectable()
 export class QuizService {
@@ -12,14 +12,14 @@ export class QuizService {
 
   async findAll() {
     return await this.prismaService.quiz.findMany({
-      include: { questions: true, _count: true },
+      include: { questions: { include: { options: true } }, _count: true },
     });
   }
 
   async findOne(id: string) {
     return await this.prismaService.quiz.findUnique({
       where: { id },
-      include: { questions: true, _count: true },
+      include: { questions: { include: { options: true } }, _count: true },
     });
   }
 
@@ -29,10 +29,23 @@ export class QuizService {
         name: createQuizDto.name,
         description: createQuizDto.description,
         questions: {
-          createMany: { data: createQuizDto.questions },
+          create: createQuizDto.questions.map((question) => {
+            const questionOptions = question.options && {
+              create: question.options.map((option) => ({
+                text: option.text,
+              })),
+            };
+
+            return {
+              title: question.title,
+              type: question.type,
+              order: question.order,
+              options: questionOptions,
+            };
+          }),
         },
       },
-      include: { questions: true, _count: true },
+      include: { questions: { include: { options: true } } },
     });
     return response;
   }
@@ -44,8 +57,8 @@ export class QuizService {
     });
 
     const { newQuestions, questionsToUpdate } = updateQuizDto.questions.reduce<{
-      newQuestions: CreateQuestionDto[];
-      questionsToUpdate: UpdateQuestionDto[];
+      newQuestions: UpdateQuizQuestionDto[];
+      questionsToUpdate: UpdateQuizQuestionDto[];
     }>(
       (acc, q) => {
         if (q.id) {
@@ -62,6 +75,10 @@ export class QuizService {
     const idsToDelete = existingQuestions
       .filter((q) => !newQuestionsIds.has(q.id))
       .map((q) => q.id);
+
+    console.log(' QuizServiceupdate newQuestions:', newQuestions);
+    console.log(' QuizServiceupdate questionsToUpdate:', questionsToUpdate);
+    console.log(' QuizServiceupdate idsToDelete:', idsToDelete);
 
     const transactionOperations: PrismaPromise<any>[] = [];
 
@@ -99,7 +116,7 @@ export class QuizService {
           name: updateQuizDto.name,
           description: updateQuizDto.description,
         },
-        include: { questions: true, _count: true },
+        include: { questions: { include: { options: true } } },
       }),
     );
 
@@ -110,6 +127,7 @@ export class QuizService {
   }
 
   async remove(id: string) {
-    return await this.prismaService.quiz.delete({ where: { id } });
+    // return await this.prismaService.quiz.delete({ where: { id } });
+    return await this.prismaService.quiz.deleteMany();
   }
 }

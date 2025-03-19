@@ -1,8 +1,8 @@
-import { updateQuestionSchema } from 'src/question/dto/update-question.dto';
+import { updateQuizQuestionSchema } from 'src/questions/dto/update-quiz-question.dto';
 import { createQuizSchema } from './create-quiz.dto';
 import { z } from 'zod';
 
-const questionArraySchema = z.array(updateQuestionSchema).min(1);
+const questionArraySchema = z.array(updateQuizQuestionSchema).min(1);
 
 export const updateQuizSchema = createQuizSchema
   .omit({ questions: true })

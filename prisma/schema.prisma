@@ -15,18 +15,56 @@ model Quiz {
   questions   Question[]
 }
 
+enum QuestionType {
+  TEXT
+  SINGLE_CHOICE
+  MULTIPLE_CHOICES
+}
+
 model Question {
-  id    String @id @default(uuid())
+  id    String       @id @default(uuid())
   title String
-  type  String // replace
+  type  QuestionType
   order Int
 
   quiz_id String
   quiz    Quiz   @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+
+  options Option[]
+  answers Answer[]
+}
+
+model Option {
+  id   String @id @default(uuid())
+  text String
+
+  question_id String
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  answers Answer[] @relation("option_on_answer", map: "AnswerOption")
 }
 
 model Response {
-  id      String @id @default(uuid())
+  id String @id @default(uuid())
+
+  completion_time Int
+  submitted_at    DateTime @default(now())
+
   quiz_id String
   quiz    Quiz   @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+
+  answers Answer[]
+}
+
+model Answer {
+  id   String  @id @default(uuid())
+  text String?
+
+  response_id String
+  response    Response @relation(fields: [response_id], references: [id], onDelete: Cascade)
+
+  question_id String
+  question    Question @relation(fields: [question_id], references: [id], onDelete: Cascade)
+
+  selected_options Option[] @relation("option_on_answer", map: "AnswerOption")
 }

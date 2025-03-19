@@ -7,7 +7,7 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { QuizService } from './quiz.service';
+import { QuizService } from './quizzes.service';
 import { CreateQuizDto, createQuizSchema } from './dto/create-quiz.dto';
 import { UpdateQuizDto, updateQuizSchema } from './dto/update-quiz.dto';
 import { validateSchema } from 'src/utils/zod-validate';
