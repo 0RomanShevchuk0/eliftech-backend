@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { QuizService } from './quizzes.service';
-import { QuizController } from './quizzes.controller';
+import { QuizzesController } from './quizzes.controller';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { QuestionsService } from 'src/questions/questions.service';
 
 @Module({
-  controllers: [QuizController],
-  providers: [QuizService, PrismaService],
+  controllers: [QuizzesController],
+  providers: [QuizService, PrismaService, QuestionsService],
 })
-export class QuizModule {}
+export class QuizzesModule {}

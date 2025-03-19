@@ -12,8 +12,8 @@ import { CreateQuizDto, createQuizSchema } from './dto/create-quiz.dto';
 import { UpdateQuizDto, updateQuizSchema } from './dto/update-quiz.dto';
 import { validateSchema } from 'src/utils/zod-validate';
 
-@Controller('quiz')
-export class QuizController {
+@Controller('quizzes')
+export class QuizzesController {
   constructor(private readonly quizService: QuizService) {}
 
   @Get()

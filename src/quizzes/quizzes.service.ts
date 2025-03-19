@@ -3,12 +3,15 @@ import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PrismaPromise } from '@prisma/client';
-import { CreateQuizQuestionDto } from 'src/questions/dto/create-quiz-question.dto';
 import { UpdateQuizQuestionDto } from 'src/questions/dto/update-quiz-question.dto';
+import { QuestionsService } from 'src/questions/questions.service';
 
 @Injectable()
 export class QuizService {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private questionsService: QuestionsService,
+  ) {}
 
   async findAll() {
     return await this.prismaService.quiz.findMany({
@@ -29,20 +32,9 @@ export class QuizService {
         name: createQuizDto.name,
         description: createQuizDto.description,
         questions: {
-          create: createQuizDto.questions.map((question) => {
-            const questionOptions = question.options && {
-              create: question.options.map((option) => ({
-                text: option.text,
-              })),
-            };
-
-            return {
-              title: question.title,
-              type: question.type,
-              order: question.order,
-              options: questionOptions,
-            };
-          }),
+          create: createQuizDto.questions.map((q) =>
+            this.questionsService.toCreateQuestionObject(q),
+          ),
         },
       },
       include: { questions: { include: { options: true } } },
@@ -83,22 +75,45 @@ export class QuizService {
     const transactionOperations: PrismaPromise<any>[] = [];
 
     if (newQuestions.length) {
-      transactionOperations.push(
-        this.prismaService.question.createMany({
-          data: newQuestions.map((q) => q),
+      const createQuestionOperations = newQuestions.map((q) =>
+        this.prismaService.question.create({
+          data: {
+            ...this.questionsService.toCreateQuestionObject(q),
+            quiz_id: id,
+          },
         }),
       );
+
+      transactionOperations.push(...createQuestionOperations);
     }
 
     if (questionsToUpdate.length) {
-      transactionOperations.push(
-        ...questionsToUpdate.map((q) =>
-          this.prismaService.question.update({
-            where: { id: q.id },
-            data: { title: q.title, order: q.order },
-          }),
-        ),
-      );
+      const updateOperations = questionsToUpdate.map((q) => {
+        const newOptions = q.options?.map((option) => ({
+          text: option.text,
+        }));
+        const optionsToUpdate = q.options?.map((option) => ({
+          text: option.text,
+        }));
+
+        const optionsToDelete = [];
+
+        return this.prismaService.question.update({
+          where: { id: q.id },
+          data: {
+            title: q.title,
+            order: q.order,
+            type: q.type,
+            options: {
+              create: newOptions,
+              update: [],
+              deleteMany: [],
+            },
+          },
+        });
+      });
+
+      transactionOperations.push(...updateOperations);
     }
 
     if (idsToDelete.length) {
