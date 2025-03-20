@@ -1,24 +1,19 @@
-
 ARG NODE_VERSION=20
 
 ################################################################################
 FROM node:${NODE_VERSION}-alpine as base
-
 WORKDIR /usr/src/app
 
 ################################################################################
 FROM base as deps
 
 COPY package.json yarn.lock ./
-
 RUN yarn install --frozen-lockfile
 
 FROM deps as build
 
 COPY . .
-
 RUN yarn prisma generate
-
 RUN yarn build
 
 ################################################################################
@@ -28,7 +23,7 @@ ENV NODE_ENV production
 
 USER node
 
-COPY yarn.lock ./
+COPY package.json yarn.lock ./
 
 COPY --from=deps /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
@@ -36,5 +31,4 @@ COPY --from=build /usr/src/app/node_modules/.prisma ./node_modules/.prisma
 
 EXPOSE 4200
 
-# Запускаем сервер
 CMD ["yarn", "start"]
