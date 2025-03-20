@@ -6,7 +6,7 @@ import { PrismaPromise } from '@prisma/client';
 import { UpdateQuizQuestionDto } from 'src/questions/dto/update-quiz-question.dto';
 import { QuestionsService } from 'src/questions/questions.service';
 import { UpdateQuizOptionDto } from 'src/questions/options/dto/update-quiz-option.dto';
-import { splitById } from 'src/utils/split-by-id';
+import { getItemsToDelete, splitById } from 'src/utils/quiz.utils';
 
 @Injectable()
 export class QuizService {
@@ -52,29 +52,10 @@ export class QuizService {
 
     const { newItems: newQuestions, existingItems: questionsToUpdate } =
       splitById<UpdateQuizQuestionDto>(updateQuizDto.questions);
-    // const { newQuestions, questionsToUpdate } = updateQuizDto.questions.reduce<{
-    //   newQuestions: UpdateQuizQuestionDto[];
-    //   questionsToUpdate: UpdateQuizQuestionDto[];
-    // }>(
-    //   (acc, q) => {
-    //     if (q.id) {
-    //       acc.questionsToUpdate.push(q);
-    //     } else {
-    //       acc.newQuestions.push(q);
-    //     }
-    //     return acc;
-    //   },
-    //   { newQuestions: [], questionsToUpdate: [] },
-    // );
 
-    const newQuestionsIds = new Set(questionsToUpdate.map((q) => q.id));
-    const questionIdsToDelete = existingQuestions
-      .filter((q) => !newQuestionsIds.has(q.id))
-      .map((q) => q.id);
-
-    console.log(' QuizServiceupdate newQuestions:', newQuestions);
-    console.log(' QuizServiceupdate questionsToUpdate:', questionsToUpdate);
-    console.log(' QuizServiceupdate idsToDelete:', questionIdsToDelete);
+    const questionIdsToDelete = getItemsToDelete<
+      Partial<UpdateQuizQuestionDto>
+    >(questionsToUpdate, existingQuestions);
 
     const transactionOperations: PrismaPromise<any>[] = [];
 
@@ -92,18 +73,28 @@ export class QuizService {
     }
 
     if (questionsToUpdate.length) {
-      const updateOperations = questionsToUpdate.map((q) => {
-        const { newItems: optionsToCreate, existingItems: optionsToUpdate } =
-          splitById(q.options ?? []);
+      const questionsOptions = await this.prismaService.question.findMany({
+        where: { id: { in: questionsToUpdate.map((q) => q.id!) } },
+        select: { id: true, options: { select: { id: true } } },
+      });
 
-        const optionIdsToDelete = [];
+      const updateOperations = questionsToUpdate.map((question) => {
+        const { newItems: optionsToCreate, existingItems: optionsToUpdate } =
+          splitById(question.options ?? []);
+
+        const existiongOptions =
+          questionsOptions.find((q) => q.id === question.id)?.options || [];
+
+        const optionIdsToDelete = getItemsToDelete<
+          Partial<UpdateQuizOptionDto>
+        >(optionsToUpdate, existiongOptions);
 
         return this.prismaService.question.update({
-          where: { id: q.id },
+          where: { id: question.id },
           data: {
-            title: q.title,
-            order: q.order,
-            type: q.type,
+            title: question.title,
+            order: question.order,
+            type: question.type,
             options: {
               create: optionsToCreate,
               update: optionsToUpdate.map((o) => ({
