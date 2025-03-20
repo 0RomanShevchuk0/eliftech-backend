@@ -8,7 +8,6 @@ export class ResponsesService {
 
   findAll() {
     return this.prismaService.response.findMany({
-      // include: { answers: true, quiz: { select: { id: true, name: true } } },
       include: {
         answers: {
           select: {
