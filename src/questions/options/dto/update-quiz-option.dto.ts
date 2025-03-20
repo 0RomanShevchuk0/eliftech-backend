@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { optionSchema } from './option-base.dto';
 
-export const updateQuizOptionSchema = optionSchema.partial({ id: true });
+export const updateQuizOptionSchema = optionSchema
+  .omit({ question_id: true })
+  .partial({ id: true });
 
-export type UpdateQuizOptioDto = z.infer<typeof updateQuizOptionSchema>;
+export type UpdateQuizOptionDto = z.infer<typeof updateQuizOptionSchema>;

@@ -5,6 +5,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { PrismaPromise } from '@prisma/client';
 import { UpdateQuizQuestionDto } from 'src/questions/dto/update-quiz-question.dto';
 import { QuestionsService } from 'src/questions/questions.service';
+import { UpdateQuizOptionDto } from 'src/questions/options/dto/update-quiz-option.dto';
+import { splitById } from 'src/utils/split-by-id';
 
 @Injectable()
 export class QuizService {
@@ -48,29 +50,31 @@ export class QuizService {
       select: { id: true },
     });
 
-    const { newQuestions, questionsToUpdate } = updateQuizDto.questions.reduce<{
-      newQuestions: UpdateQuizQuestionDto[];
-      questionsToUpdate: UpdateQuizQuestionDto[];
-    }>(
-      (acc, q) => {
-        if (q.id) {
-          acc.questionsToUpdate.push(q);
-        } else {
-          acc.newQuestions.push(q);
-        }
-        return acc;
-      },
-      { newQuestions: [], questionsToUpdate: [] },
-    );
+    const { newItems: newQuestions, existingItems: questionsToUpdate } =
+      splitById<UpdateQuizQuestionDto>(updateQuizDto.questions);
+    // const { newQuestions, questionsToUpdate } = updateQuizDto.questions.reduce<{
+    //   newQuestions: UpdateQuizQuestionDto[];
+    //   questionsToUpdate: UpdateQuizQuestionDto[];
+    // }>(
+    //   (acc, q) => {
+    //     if (q.id) {
+    //       acc.questionsToUpdate.push(q);
+    //     } else {
+    //       acc.newQuestions.push(q);
+    //     }
+    //     return acc;
+    //   },
+    //   { newQuestions: [], questionsToUpdate: [] },
+    // );
 
     const newQuestionsIds = new Set(questionsToUpdate.map((q) => q.id));
-    const idsToDelete = existingQuestions
+    const questionIdsToDelete = existingQuestions
       .filter((q) => !newQuestionsIds.has(q.id))
       .map((q) => q.id);
 
     console.log(' QuizServiceupdate newQuestions:', newQuestions);
     console.log(' QuizServiceupdate questionsToUpdate:', questionsToUpdate);
-    console.log(' QuizServiceupdate idsToDelete:', idsToDelete);
+    console.log(' QuizServiceupdate idsToDelete:', questionIdsToDelete);
 
     const transactionOperations: PrismaPromise<any>[] = [];
 
@@ -89,14 +93,10 @@ export class QuizService {
 
     if (questionsToUpdate.length) {
       const updateOperations = questionsToUpdate.map((q) => {
-        const newOptions = q.options?.map((option) => ({
-          text: option.text,
-        }));
-        const optionsToUpdate = q.options?.map((option) => ({
-          text: option.text,
-        }));
+        const { newItems: optionsToCreate, existingItems: optionsToUpdate } =
+          splitById(q.options ?? []);
 
-        const optionsToDelete = [];
+        const optionIdsToDelete = [];
 
         return this.prismaService.question.update({
           where: { id: q.id },
@@ -105,9 +105,12 @@ export class QuizService {
             order: q.order,
             type: q.type,
             options: {
-              create: newOptions,
-              update: [],
-              deleteMany: [],
+              create: optionsToCreate,
+              update: optionsToUpdate.map((o) => ({
+                where: { id: o.id },
+                data: o,
+              })),
+              deleteMany: { id: { in: optionIdsToDelete } },
             },
           },
         });
@@ -116,10 +119,10 @@ export class QuizService {
       transactionOperations.push(...updateOperations);
     }
 
-    if (idsToDelete.length) {
+    if (questionIdsToDelete.length) {
       transactionOperations.push(
         this.prismaService.question.deleteMany({
-          where: { id: { in: idsToDelete } },
+          where: { id: { in: questionIdsToDelete } },
         }),
       );
     }
