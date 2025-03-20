@@ -1,16 +1,22 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { ResponsesService } from './responses.service';
-import { CreateResponseDto } from './dto/create-response.dto';
-import { UpdateResponseDto } from './dto/update-response.dto';
+import {
+  CreateResponseDto,
+  createResponseSchema,
+} from './dto/create-response.dto';
+import { validateSchema } from 'src/utils/zod-validate';
 
 @Controller('responses')
 export class ResponsesController {
   constructor(private readonly responsesService: ResponsesService) {}
-
-  @Post()
-  create(@Body() createResponseDto: CreateResponseDto) {
-    return this.responsesService.create(createResponseDto);
-  }
 
   @Get()
   findAll() {
@@ -19,16 +25,17 @@ export class ResponsesController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.responsesService.findOne(+id);
+    return this.responsesService.findOne(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateResponseDto: UpdateResponseDto) {
-    return this.responsesService.update(+id, updateResponseDto);
+  @Post()
+  create(@Body() body: CreateResponseDto) {
+    const parsedData = validateSchema(createResponseSchema, body);
+    return this.responsesService.create(parsedData);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.responsesService.remove(+id);
+    return this.responsesService.remove(id);
   }
 }

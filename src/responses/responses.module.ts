@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ResponsesService } from './responses.service';
 import { ResponsesController } from './responses.controller';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
   controllers: [ResponsesController],
-  providers: [ResponsesService],
+  providers: [ResponsesService, PrismaService],
 })
 export class ResponsesModule {}

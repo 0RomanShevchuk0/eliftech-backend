@@ -1,26 +1,50 @@
 import { Injectable } from '@nestjs/common';
 import { CreateResponseDto } from './dto/create-response.dto';
-import { UpdateResponseDto } from './dto/update-response.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class ResponsesService {
-  create(createResponseDto: CreateResponseDto) {
-    return 'This action adds a new response';
-  }
+  constructor(private prismaService: PrismaService) {}
 
   findAll() {
-    return `This action returns all responses`;
+    return this.prismaService.response.findMany({
+      include: { answers: true, quiz: { select: { id: true, name: true } } },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} response`;
+  findOne(id: string) {
+    return this.prismaService.response.findUnique({
+      where: { id },
+      include: { answers: true, quiz: { select: { id: true, name: true } } },
+    });
   }
 
-  update(id: number, updateResponseDto: UpdateResponseDto) {
-    return `This action updates a #${id} response`;
+  create(data: CreateResponseDto) {
+    return this.prismaService.response.create({
+      data: {
+        quiz_id: data.quiz_id,
+        submitted_at: data.submitted_at,
+        completion_time: data.completion_time,
+        answers: {
+          create: data.answers.map((a) => {
+            return {
+              text: a.text,
+              question_id: a.question_id,
+              // selected_options: {
+              // 	connect: {
+              // 		// id
+              // 		// question_id
+              // 	}
+              // }
+            };
+          }),
+        },
+      },
+      include: { answers: true, quiz: { select: { id: true, name: true } } },
+    });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} response`;
+  remove(id: string) {
+    return this.prismaService.response.delete({ where: { id } });
   }
 }
