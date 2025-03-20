@@ -136,7 +136,6 @@ export class QuizService {
   }
 
   async remove(id: string) {
-    // return await this.prismaService.quiz.delete({ where: { id } });
-    return await this.prismaService.quiz.deleteMany();
+    return await this.prismaService.quiz.delete({ where: { id } });
   }
 }
