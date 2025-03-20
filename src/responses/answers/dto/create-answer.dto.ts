@@ -4,7 +4,7 @@ export const createAnswerSchema = z
   .object({
     text: z.string().optional(),
     question_id: z.string(),
-    // selected_options: z.array()
+    selected_options: z.array(z.string()),
   })
   .strict();
 

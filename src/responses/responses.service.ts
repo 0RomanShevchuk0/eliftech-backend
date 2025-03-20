@@ -8,7 +8,15 @@ export class ResponsesService {
 
   findAll() {
     return this.prismaService.response.findMany({
-      include: { answers: true, quiz: { select: { id: true, name: true } } },
+      // include: { answers: true, quiz: { select: { id: true, name: true } } },
+      include: {
+        answers: {
+          select: {
+            selected_options: { select: { text: true } },
+          },
+        },
+        quiz: { select: { id: true, name: true } },
+      },
     });
   }
 
@@ -30,17 +38,23 @@ export class ResponsesService {
             return {
               text: a.text,
               question_id: a.question_id,
-              // selected_options: {
-              // 	connect: {
-              // 		// id
-              // 		// question_id
-              // 	}
-              // }
+              selected_options: {
+                connect: a.selected_options.map((optionId) => ({
+                  id: optionId,
+                })),
+              },
             };
           }),
         },
       },
-      include: { answers: true, quiz: { select: { id: true, name: true } } },
+      include: {
+        answers: {
+          select: {
+            selected_options: { select: { text: true } },
+          },
+        },
+        quiz: { select: { id: true, name: true } },
+      },
     });
   }
 
