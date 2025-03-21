@@ -1,4 +1,4 @@
-import { updateQuizQuestionSchema } from 'src/questions/dto/update-quiz-question.dto';
+import { updateQuizQuestionSchema } from '../questions/dto/update-quiz-question.dto';
 import { createQuizSchema } from './create-quiz.dto';
 import { z } from 'zod';
 

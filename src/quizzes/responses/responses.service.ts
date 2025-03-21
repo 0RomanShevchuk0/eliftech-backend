@@ -6,8 +6,9 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ResponsesService {
   constructor(private prismaService: PrismaService) {}
 
-  findAll() {
+  findAll(quizId: string) {
     return this.prismaService.response.findMany({
+      where: { quiz_id: quizId },
       include: {
         answers: {
           select: {
@@ -19,17 +20,17 @@ export class ResponsesService {
     });
   }
 
-  findOne(id: string) {
+  findOne(quizId: string, id: string) {
     return this.prismaService.response.findUnique({
-      where: { id },
+      where: { quiz_id: quizId, id },
       include: { answers: true, quiz: { select: { id: true, name: true } } },
     });
   }
 
-  create(data: CreateResponseDto) {
+  create(quizId: string, data: CreateResponseDto) {
     return this.prismaService.response.create({
       data: {
-        quiz_id: data.quiz_id,
+        quiz_id: quizId,
         submitted_at: data.submitted_at,
         completion_time: data.completion_time,
         answers: {
@@ -57,7 +58,9 @@ export class ResponsesService {
     });
   }
 
-  remove(id: string) {
-    return this.prismaService.response.delete({ where: { id } });
+  remove(quizId: string, id: string) {
+    return this.prismaService.response.delete({
+      where: { quiz_id: quizId, id },
+    });
   }
 }

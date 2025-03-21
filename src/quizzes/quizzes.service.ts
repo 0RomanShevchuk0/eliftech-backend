@@ -3,10 +3,10 @@ import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { PrismaPromise } from '@prisma/client';
-import { UpdateQuizQuestionDto } from 'src/questions/dto/update-quiz-question.dto';
-import { QuestionsService } from 'src/questions/questions.service';
-import { UpdateQuizOptionDto } from 'src/questions/options/dto/update-quiz-option.dto';
 import { getItemsToDelete, splitById } from 'src/utils/quiz.utils';
+import { QuestionsService } from './questions/questions.service';
+import { UpdateQuizQuestionDto } from './questions/dto/update-quiz-question.dto';
+import { UpdateQuizOptionDto } from './questions/options/dto/update-quiz-option.dto';
 
 @Injectable()
 export class QuizService {

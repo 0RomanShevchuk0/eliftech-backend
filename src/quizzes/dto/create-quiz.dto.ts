@@ -1,5 +1,5 @@
-import { createQuizQuestionSchema } from 'src/questions/dto/create-quiz-question.dto';
 import { z } from 'zod';
+import { createQuizQuestionSchema } from '../questions/dto/create-quiz-question.dto';
 
 export const createQuizSchema = z.object({
   name: z.string(),
