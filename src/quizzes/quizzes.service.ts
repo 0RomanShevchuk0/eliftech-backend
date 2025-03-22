@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -22,10 +22,16 @@ export class QuizService {
   }
 
   async findOne(id: string) {
-    return await this.prismaService.quiz.findUnique({
+    const quiz = await this.prismaService.quiz.findUnique({
       where: { id },
       include: { questions: { include: { options: true } }, _count: true },
     });
+
+    if (!quiz) {
+      throw new NotFoundException(`Quiz with id ${id} not found`);
+    }
+
+    return quiz;
   }
 
   async create(createQuizDto: CreateQuizDto) {

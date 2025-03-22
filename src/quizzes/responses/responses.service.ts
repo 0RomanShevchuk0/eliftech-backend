@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateResponseDto } from './dto/create-response.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
@@ -6,7 +6,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class ResponsesService {
   constructor(private prismaService: PrismaService) {}
 
-  findAll(quizId: string) {
+  async findAll(quizId: string) {
     return this.prismaService.response.findMany({
       where: { quiz_id: quizId },
       include: {
@@ -20,14 +20,20 @@ export class ResponsesService {
     });
   }
 
-  findOne(quizId: string, id: string) {
-    return this.prismaService.response.findUnique({
+  async findOne(quizId: string, id: string) {
+    const response = await this.prismaService.response.findUnique({
       where: { quiz_id: quizId, id },
       include: { answers: true, quiz: { select: { id: true, name: true } } },
     });
+
+    if (!response) {
+      throw new NotFoundException(`Quiz with id ${id} not found`);
+    }
+
+    return response;
   }
 
-  create(quizId: string, data: CreateResponseDto) {
+  async create(quizId: string, data: CreateResponseDto) {
     return this.prismaService.response.create({
       data: {
         quiz_id: quizId,
@@ -58,7 +64,7 @@ export class ResponsesService {
     });
   }
 
-  remove(quizId: string, id: string) {
+  async remove(quizId: string, id: string) {
     return this.prismaService.response.delete({
       where: { quiz_id: quizId, id },
     });
