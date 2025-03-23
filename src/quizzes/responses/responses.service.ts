@@ -10,7 +10,13 @@ export class ResponsesService {
     return this.prismaService.response.findMany({
       where: { quiz_id: quizId },
       include: {
-        answers: true,
+        answers: {
+          select: {
+            id: true,
+            text: true,
+            selected_options: true,
+          },
+        },
         quiz: { select: { id: true, name: true } },
       },
     });
@@ -19,7 +25,16 @@ export class ResponsesService {
   async findOne(quizId: string, id: string) {
     const response = await this.prismaService.response.findUnique({
       where: { quiz_id: quizId, id },
-      include: { answers: true, quiz: { select: { id: true, name: true } } },
+      include: {
+        answers: {
+          select: {
+            id: true,
+            text: true,
+            selected_options: true,
+          },
+        },
+        quiz: { select: { id: true, name: true } },
+      },
     });
 
     if (!response) {
@@ -50,7 +65,13 @@ export class ResponsesService {
         },
       },
       include: {
-        answers: true,
+        answers: {
+          select: {
+            id: true,
+            text: true,
+            selected_options: true,
+          },
+        },
         quiz: { select: { id: true, name: true } },
       },
     });
