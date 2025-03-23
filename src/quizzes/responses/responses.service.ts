@@ -10,11 +10,7 @@ export class ResponsesService {
     return this.prismaService.response.findMany({
       where: { quiz_id: quizId },
       include: {
-        answers: {
-          select: {
-            selected_options: { select: { text: true } },
-          },
-        },
+        answers: true,
         quiz: { select: { id: true, name: true } },
       },
     });
@@ -54,11 +50,7 @@ export class ResponsesService {
         },
       },
       include: {
-        answers: {
-          select: {
-            selected_options: { select: { text: true } },
-          },
-        },
+        answers: true,
         quiz: { select: { id: true, name: true } },
       },
     });
