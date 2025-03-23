@@ -30,10 +30,15 @@ export class ResponsesService {
           select: {
             id: true,
             text: true,
-            selected_options: true,
+						question_id: true,
+            selected_options: {select: {
+							id: true,
+							text: true,
+							question_id: true
+						}},
           },
         },
-        quiz: { select: { id: true, name: true } },
+        quiz: { select: { id: true, name: true }, },
       },
     });
 
@@ -52,6 +57,7 @@ export class ResponsesService {
         completion_time: data.completion_time,
         answers: {
           create: data.answers.map((a) => {
+						console.log('create a', a)
             return {
               text: a.text,
               question_id: a.question_id,
