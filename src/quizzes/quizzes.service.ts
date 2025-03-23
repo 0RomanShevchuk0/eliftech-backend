@@ -7,6 +7,7 @@ import { getItemsToDelete, splitById } from 'src/utils/quiz.utils';
 import { QuestionsService } from './questions/questions.service';
 import { UpdateQuizQuestionDto } from './questions/dto/update-quiz-question.dto';
 import { UpdateQuizOptionDto } from './questions/options/dto/update-quiz-option.dto';
+import { getPaginationStatus, getSkipValue } from 'src/utils/pagination.utils';
 
 @Injectable()
 export class QuizService {
@@ -15,16 +16,44 @@ export class QuizService {
     private questionsService: QuestionsService,
   ) {}
 
-  async findAll() {
-    return await this.prismaService.quiz.findMany({
-      include: { questions: { include: { options: true } }, _count: true },
-    });
+  async findAll(page: number, limit: number) {
+    const skip = getSkipValue(page, limit);
+
+    const [items, totalCount] = await Promise.all([
+      this.prismaService.quiz.findMany({
+        skip,
+        take: limit,
+        include: {
+          questions: { orderBy: { order: 'asc' }, include: { options: true } },
+          _count: true,
+        },
+      }),
+      this.prismaService.quiz.count(),
+    ]);
+
+    const { hasNextPage, hasPrevPage } = getPaginationStatus(
+      page,
+      limit,
+      totalCount,
+    );
+
+    return {
+      page,
+      limit,
+      totalCount,
+      hasNextPage,
+      hasPrevPage,
+      items,
+    };
   }
 
   async findOne(id: string) {
     const quiz = await this.prismaService.quiz.findUnique({
       where: { id },
-      include: { questions: { include: { options: true } }, _count: true },
+      include: {
+        questions: { orderBy: { order: 'asc' }, include: { options: true } },
+        _count: true,
+      },
     });
 
     if (!quiz) {

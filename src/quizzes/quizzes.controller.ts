@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { QuizService } from './quizzes.service';
 import { CreateQuizDto, createQuizSchema } from './dto/create-quiz.dto';
@@ -17,8 +18,11 @@ export class QuizzesController {
   constructor(private readonly quizService: QuizService) {}
 
   @Get()
-  findAll() {
-    return this.quizService.findAll();
+  findAll(@Query('page') page = '1', @Query('limit') limit = '10') {
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    return this.quizService.findAll(pageNumber, limitNumber);
   }
 
   @Get(':id')
