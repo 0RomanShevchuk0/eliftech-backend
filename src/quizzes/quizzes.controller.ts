@@ -18,11 +18,15 @@ export class QuizzesController {
   constructor(private readonly quizService: QuizService) {}
 
   @Get()
-  findAll(@Query('page') page = '1', @Query('limit') limit = '10') {
+  findAll(
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('sortBy') sortBy: string,
+  ) {
     const pageNumber = parseInt(page, 10);
     const limitNumber = parseInt(limit, 10);
 
-    return this.quizService.findAll(pageNumber, limitNumber);
+    return this.quizService.findAll(pageNumber, limitNumber, sortBy);
   }
 
   @Get(':id')

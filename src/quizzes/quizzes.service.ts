@@ -2,13 +2,15 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateQuizDto } from './dto/create-quiz.dto';
 import { UpdateQuizDto } from './dto/update-quiz.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { PrismaPromise, Quiz } from '@prisma/client';
+import { Prisma, PrismaPromise, Quiz } from '@prisma/client';
 import { getItemsToDelete, splitById } from 'src/utils/quiz.utils';
 import { QuestionsService } from './questions/questions.service';
 import { UpdateQuizQuestionDto } from './questions/dto/update-quiz-question.dto';
 import { UpdateQuizOptionDto } from './questions/options/dto/update-quiz-option.dto';
 import { getPaginationStatus, getSkipValue } from 'src/utils/pagination.utils';
 import { WithPagination } from 'src/types/pagination.types';
+import { getOrderBy } from 'src/utils/sorting.utils';
+import { QUIZ_SORT_FIELDS } from 'src/constants/sort-fields';
 
 @Injectable()
 export class QuizService {
@@ -17,8 +19,17 @@ export class QuizService {
     private questionsService: QuestionsService,
   ) {}
 
-  async findAll(page: number, limit: number): Promise<WithPagination<Quiz>> {
+  async findAll(
+    page: number,
+    limit: number,
+    sortBy: string,
+  ): Promise<WithPagination<Quiz>> {
     const skip = getSkipValue(page, limit);
+
+    const orderBy = getOrderBy<Prisma.QuizOrderByWithRelationInput>(
+      sortBy,
+      QUIZ_SORT_FIELDS,
+    );
 
     const [items, totalCount] = await Promise.all([
       this.prismaService.quiz.findMany({
@@ -28,6 +39,7 @@ export class QuizService {
           questions: { orderBy: { order: 'asc' }, include: { options: true } },
           _count: true,
         },
+        orderBy,
       }),
       this.prismaService.quiz.count(),
     ]);

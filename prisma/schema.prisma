@@ -13,6 +13,8 @@ model Quiz {
   description String
   responses   Response[]
   questions   Question[]
+
+  created_at DateTime @default(now())
 }
 
 enum QuestionType {
